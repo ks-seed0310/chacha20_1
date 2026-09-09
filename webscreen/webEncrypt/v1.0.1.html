@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset=utf-8>
+        <style>
+            textarea{
+                margin:16px;
+                
+            }
+            input{
+                margin:16px;
+            }
+            p{
+                margin:4px;
+            }
+        </style>
+        <script src="https://ks-seed0310.github.io/chacha20_1/chacha20/v1.0.0.js"></script>
+    </head>
+    <body style="max-width:100vw;min-height:100vh;width:100vw;">
+        <p>ChaCha20 Encrypter</p>
+        <span>
+            <p>メインデータ(一番最初に0xを付けてHexを書くとバイナリとして読み込みます):</p>
+            <textarea id="data" style="width:90%;height:50vh;font-family:'Noto Sans JP'"></textarea>
+        </span>
+        <br>
+        <span>
+            <p>秘密鍵(0xを付け32Byte(256bit)分(64文字)のHexを書くとバイナリ("0x"+64=66桁でないとテキスト判定)、それ以外:SHA-256 Hashが秘密鍵)(何も書かない場合:自動生成):</p>
+            <input id="key" style="width:90%;font-family:'Noto Sans JP'" oninput="el.keyLen.textContent=`${this.value.length}桁`">
+            <button onclick=copysup("key")>Copy</button>
+            <br>
+            <span id="key_len"></span>
+        </span>
+        <br>
+        <br>
+        <span>
+            <p>ナンス(0xを付けて12Byte(96bit)分(24文字)のHexを書いてください。"0x"+24=26桁になるようにしてください(自動生成されます)(書かない場合は自動生成されます。)):</p>
+            <input id="nonce" style="width:90%;font-family:'Noto Sans JP'" oninput="el.nonceLen.textContent=`${this.value.length}桁`">
+            <button onclick=copysup("nonce")>Copy</button>
+            <br>
+            <span id="nonce_len"></span>
+        </span>
+        <br>
+        <br>
+        <button onclick=javascript:generate() id="start">生成</button>
+        <span>
+            ここに出力されます...
+            <button onclick=copysup("output")>Copy</button>
+            <textarea id="output" style="width:90%;height:30vh;font-family:'Noto Sans JP'" disabled></textarea>
+        </span>
+        <script>
+            const gi=(n)=>document.getElementById(n);
+            const el={
+                data:gi("data"),
+                key:gi("key"),
+                nonce:gi("nonce"),
+                start:gi("start"),
+                output:gi("output"),
+                keyLen:gi("key_len"),
+                nonceLen:gi("nonce_len"),
+            }
+            async function copy(text,quiet=false){
+                console.log(text)
+                try{
+                    await navigator.clipboard.writeText(text)
+                    if (!quiet)alert("コピー成功: "+text)
+                }catch(e){
+                    if (!quiet)alert("コピー失敗: "+text)
+                }
+            }
+            async function copysup(elid){
+                const e=el[elid]
+                await copy(e.value||e.placeholder)
+            }
+            async function generate(){
+                el.output.value=""
+                el.data.disabled=true
+                el.key.disabled=true
+                el.nonce.disabled=true
+                el.start.disabled=true
+
+                const encoder=new TextEncoder()
+                const decoder=new TextDecoder("utf-8")
+                const data_temp=el.data.value
+                const key_temp=el.key.value
+                const nonce_temp=el.nonce.value
+                //dataType true:Hex false:String
+                const dataType=(data_temp.startsWith("0x"))
+                const data=(function(){
+                    if (dataType){
+                        return Uint8Array.fromHex(data_temp.slice(2))
+                    }else{
+                        return encoder.encode(data_temp)
+                    }
+                })()
+                //keyType true:Hex false:Str
+                const keyType=(key_temp.startsWith("0x")&&key_temp.length===66)
+                //keyType2 true:key found false:key not found(autoGenerate)
+                const keyType2=(key_temp!=="")
+                const key=await (async function(){
+                    if (keyType){
+                        return Uint8Array.fromHex(key_temp.slice(2))
+                    }else if (keyType2){
+                        return new Uint8Array(await crypto.subtle.digest("SHA-256",encoder.encode(key_temp)))
+                    }else{
+                        return crypto.getRandomValues(new Uint8Array(32))
+                    }
+                })()
+                //keyType true:Hex false:autoGenerate 
+                const nonceType=(nonce_temp.startsWith("0x")&&nonce_temp.length===26)
+                const nonce=(function(){
+                    if (nonceType){
+                        return Uint8Array.fromHex(nonce_temp.slice(2))
+                    }else{
+                        return crypto.getRandomValues(new Uint8Array(12))
+                    }
+                })()
+                //console.log("data_temp:",data_temp,"\nkey_temp:",key_temp,"\nnonce_temp:",nonce_temp,"\ndataType:",dataType,"\ndata:",data,"\nkeyType:",keyType,"\nkeyType2:",keyType2,"\nkey:",key,"\nnonceType:",nonceType,"\nnonce:",nonce)
+                const encrypt=new algoEncrypt()
+                const encrypted=encrypt.decrypt(data,key,nonce,false)
+                const outdata=encrypted.toHex()
+                el.output.value=outdata
+
+                el.key.placeholder=key.toHex()
+                el.nonce.placeholder=nonce.toHex()
+                el.data.disabled=false
+                el.key.disabled=false
+                el.nonce.disabled=false
+                el.start.disabled=false
+            }
+        </script>
+    </body>
+</html>
