@@ -68,7 +68,7 @@
             }
             async function copysup(elid,hexOnly=true){
                 const e=el[elid]
-                await copy(((hexOnly&&e.value.startsWith("0x"))?e.value:e.placeholder)||e.placeholder)
+                await copy((hexOnly&&e.value.startsWith("0x")?e.value:(e.placeholder||e.value)))
             }
             async function generate(){
                 el.output.value=""
