@@ -14,7 +14,7 @@
                 margin:4px;
             }
         </style>
-        <script src="https://ks-seed0310.github.io/chacha20_1/chacha20/v1.0.0.js"></script>
+        <script src=https://ks-seed0310.github.io/chacha20_1/chacha20/v1.0.0.js></script>
     </head>
     <body style="max-width:100vw;min-height:100vh;width:100vw;">
         <p>ChaCha20 Encrypter</p>
@@ -26,7 +26,7 @@
         <span>
             <p>秘密鍵(0xを付け32Byte(256bit)分(64文字)のHexを書くとバイナリ("0x"+64=66桁でないとテキスト判定)、それ以外:SHA-256 Hashが秘密鍵)(何も書かない場合:自動生成):</p>
             <input id="key" style="width:90%;font-family:'Noto Sans JP'" oninput="el.keyLen.textContent=`${this.value.length}桁`">
-            <button onclick=copysup("key")>Copy</button>
+            <button onclick=copysup("key",true)>Copy</button>
             <br>
             <span id="key_len"></span>
         </span>
@@ -35,7 +35,7 @@
         <span>
             <p>ナンス(0xを付けて12Byte(96bit)分(24文字)のHexを書いてください。"0x"+24=26桁になるようにしてください(自動生成されます)(書かない場合は自動生成されます。)):</p>
             <input id="nonce" style="width:90%;font-family:'Noto Sans JP'" oninput="el.nonceLen.textContent=`${this.value.length}桁`">
-            <button onclick=copysup("nonce")>Copy</button>
+            <button onclick=copysup("nonce",true)>Copy</button>
             <br>
             <span id="nonce_len"></span>
         </span>
@@ -59,7 +59,6 @@
                 nonceLen:gi("nonce_len"),
             }
             async function copy(text,quiet=false){
-                console.log(text)
                 try{
                     await navigator.clipboard.writeText(text)
                     if (!quiet)alert("コピー成功: "+text)
@@ -67,9 +66,9 @@
                     if (!quiet)alert("コピー失敗: "+text)
                 }
             }
-            async function copysup(elid){
+            async function copysup(elid,hexOnly=true){
                 const e=el[elid]
-                await copy(e.value||e.placeholder)
+                await copy(((hexOnly&&e.value.startsWith("0x"))?e.value:e.placeholder)||e.placeholder)
             }
             async function generate(){
                 el.output.value=""
