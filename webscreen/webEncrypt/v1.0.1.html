@@ -120,8 +120,8 @@
                 const outdata=encrypted.toHex()
                 el.output.value=outdata
 
-                el.key.placeholder=key.toHex()
-                el.nonce.placeholder=nonce.toHex()
+                el.key.placeholder="0x"+key.toHex()
+                el.nonce.placeholder="0x"+nonce.toHex()
                 el.data.disabled=false
                 el.key.disabled=false
                 el.nonce.disabled=false
