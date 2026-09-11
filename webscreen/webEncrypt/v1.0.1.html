@@ -68,6 +68,7 @@
             }
             async function copysup(elid,hexOnly=true){
                 const e=el[elid]
+                //await copy((((hexOnly&&e.value.startsWith("0x"))?e.value:(e.placeholder||e.value)))||e.placeholder)
                 await copy((hexOnly&&e.value.startsWith("0x")?e.value:(e.placeholder||e.value)))
             }
             async function generate(){
@@ -85,34 +86,67 @@
                 //dataType true:Hex false:String
                 const dataType=(data_temp.startsWith("0x"))
                 const data=(function(){
-                    if (dataType){
-                        return Uint8Array.fromHex(data_temp.slice(2))
-                    }else{
-                        return encoder.encode(data_temp)
+                    try{
+                        if (dataType){
+                            return Uint8Array.fromHex(data_temp.slice(2))
+                        }else{
+                            return encoder.encode(data_temp)
+                        }
+                    }catch(e){
+                        console.warn("Debug: ",e)
+                        el.output.value="ERR::DATA_PARSE_ERROR"
+                        el.data.disabled=false
+                        el.key.disabled=false
+                        el.nonce.disabled=false
+                        el.start.disabled=false
+                        return "ERR::DATA_PARSE_ERROR"
                     }
                 })()
+                if (!(data instanceof Uint8Array))return data
                 //keyType true:Hex false:Str
                 const keyType=(key_temp.startsWith("0x")&&key_temp.length===66)
                 //keyType2 true:key found false:key not found(autoGenerate)
                 const keyType2=(key_temp!=="")
                 const key=await (async function(){
-                    if (keyType){
-                        return Uint8Array.fromHex(key_temp.slice(2))
-                    }else if (keyType2){
-                        return new Uint8Array(await crypto.subtle.digest("SHA-256",encoder.encode(key_temp)))
-                    }else{
-                        return crypto.getRandomValues(new Uint8Array(32))
+                    try{
+                        if (keyType){
+                            return Uint8Array.fromHex(key_temp.slice(2))
+                        }else if (keyType2){
+                            return new Uint8Array(await crypto.subtle.digest("SHA-256",encoder.encode(key_temp)))
+                        }else{
+                            return crypto.getRandomValues(new Uint8Array(32))
+                        }
+                    }catch(e){
+                        console.warn("Debug: ",e)
+                        el.output.value="ERR::KEY_PARSE_ERROR"
+                        el.data.disabled=false
+                        el.key.disabled=false
+                        el.nonce.disabled=false
+                        el.start.disabled=false
+                        return "ERR::KEY_PARSE_ERROR"
                     }
                 })()
+                if (!(key instanceof Uint8Array))return key
                 //keyType true:Hex false:autoGenerate 
                 const nonceType=(nonce_temp.startsWith("0x")&&nonce_temp.length===26)
                 const nonce=(function(){
-                    if (nonceType){
-                        return Uint8Array.fromHex(nonce_temp.slice(2))
-                    }else{
-                        return crypto.getRandomValues(new Uint8Array(12))
+                    try{
+                        if (nonceType){
+                            return Uint8Array.fromHex(nonce_temp.slice(2))
+                        }else{
+                            return crypto.getRandomValues(new Uint8Array(12))
+                        }
+                    }catch(e){
+                        console.warn("Debug: ",e)
+                        el.output.value="ERR::NONCE_PARSE_ERROR"
+                        el.data.disabled=false
+                        el.key.disabled=false
+                        el.nonce.disabled=false
+                        el.start.disabled=false
+                        return "ERR::NONCE_PARSE_ERROR"
                     }
                 })()
+                if (!(nonce instanceof Uint8Array))return nonce
                 //console.log("data_temp:",data_temp,"\nkey_temp:",key_temp,"\nnonce_temp:",nonce_temp,"\ndataType:",dataType,"\ndata:",data,"\nkeyType:",keyType,"\nkeyType2:",keyType2,"\nkey:",key,"\nnonceType:",nonceType,"\nnonce:",nonce)
                 const encrypt=new algoEncrypt()
                 const encrypted=encrypt.decrypt(data,key,nonce,false)
